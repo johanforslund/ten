@@ -1,0 +1,22 @@
+.card {
+  display: inline-block;
+  width: 50px;
+  border: 1px solid black;
+  text-align: center;
+  margin: 5px;
+}
+
+.card:hover {
+  background: lightgray;
+  cursor: pointer;
+}
+
+button {
+  display: block;
+  margin-bottom: 5px;
+  width: 100px;
+}
+
+.latest {
+  font-weight: bold;
+}
