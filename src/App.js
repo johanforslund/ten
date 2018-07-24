@@ -5,11 +5,14 @@ class App extends Component {
   state = {
     cards: [],
     money: 100,
-    idCounter: 0
+    idCounter: 0,
+    won: false
   }
 
   deal = numberOfCards => {
     if (this.state.money < numberOfCards) return;
+
+    if (this.state.won) this.setState({ won: false });
 
     const result = [];
     for (let i=0; i<numberOfCards; i++) {
@@ -36,6 +39,10 @@ class App extends Component {
       cards: [...this.state.cards, ...result].sort((a, b) => a.number - b.number),
       idCounter: this.state.idCounter + numberOfCards,
       money: this.state.money - numberOfCards
+    }, () => {
+      if (this.checkForWin()) {
+        this.win();
+      }
     });
   }
 
@@ -45,25 +52,76 @@ class App extends Component {
     });
 
     this.state.cards.filter(card => {
-      return card.id != id;
+      return card.id !== id;
     });
 
     this.setState({
       cards: this.state.cards.filter(card => {
-        return card.id != id;
+        return card.id !== id;
       }),
       money: this.state.money + card.number //This should of course be changed
+    });
+  }
+
+  checkForWin() {
+    const uniCards = [...(new Set(this.state.cards.map(({ number }) => number)))];
+    if (uniCards.length === 10) {
+      return true;
+    }
+    return false;
+  }
+
+  win() {
+    const numbers = this.state.cards.map(card => {
+      return card.number;
+    });
+
+    const cards = this.state.cards;
+
+    for (let i=1; i<=10; i++) {
+      const index = numbers.indexOf(i);
+
+      if (index !== -1) {
+        cards.splice(index, 1);
+      }
+    }
+
+    this.setState({
+      cards: cards,
+      won: true,
+      money: this.state.money += 100
     });
   }
 
   renderCards() {
     return this.state.cards.map(card => {
       return (
-        <div onClick={() => this.sellCard(card.id)} className={`card ${card.id === this.state.idCounter-1 ? 'latest' : ''}`}>
+        <div
+          key={card.id}
+          onClick={() => this.sellCard(card.id)}
+          className={`card ${card.id === this.state.idCounter-1 ? 'latest' : ''}`}
+        >
           <p>{card.number}</p>
         </div>
       );
     });
+  }
+
+  renderWinningCards() {
+    const winningCards = [];
+    if (this.state.won) {
+      for (let i=1; i<=10; i++) {
+        winningCards.push(
+          <div style={{background: 'lightgreen'}} className={'card'}>
+            <p>{i}</p>
+          </div>
+        );
+      }
+      winningCards.push(<br />);
+      winningCards.push(<br />);
+    }
+
+    return winningCards;
   }
 
   renderResultText() {
@@ -71,7 +129,12 @@ class App extends Component {
       return card.id === this.state.idCounter - 1;
     });
 
-    if (this.state.idCounter > 0 && latestCard) {
+    if (this.state.won) {
+      return (
+        <h1 style={{color: 'green'}}>You won!</h1>
+      );
+    }
+    else if (this.state.idCounter > 0 && latestCard) {
       return (
         <h2>You got <strong>{latestCard.number}</strong></h2>
       );
@@ -84,9 +147,11 @@ class App extends Component {
         <h1>ten</h1>
         <hr />
         <p>Money: ${this.state.money}</p>
+        <p>Number of cards: {this.state.cards.length}</p>
         <button onClick={() => this.deal(10) }>DEAL 10 CARDS</button>
         <button onClick={() => this.deal(1)}>DEAL 1 CARD</button>
         {this.renderResultText()}
+        {this.renderWinningCards()}
         {this.renderCards()}
       </div>
     );
