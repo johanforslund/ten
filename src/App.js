@@ -4,7 +4,7 @@ import './App.css';
 class App extends Component {
   state = {
     cards: [],
-    money: 100,
+    money: 3000,
     idCounter: 0,
     won: false
   }
@@ -38,7 +38,28 @@ class App extends Component {
     this.setState({
       cards: [...this.state.cards, ...result].sort((a, b) => a.number - b.number),
       idCounter: this.state.idCounter + numberOfCards,
-      money: this.state.money - numberOfCards
+      money: this.state.money - (numberOfCards * 500 / 55) //Verkar vara för dyrt...
+    }, () => {
+      if (this.checkForWin()) {
+        this.win();
+      }
+    });
+  }
+
+  buyCard = number => {
+    if (this.state.money < number) return;
+
+    if (this.state.won) this.setState({ won: false });
+
+    const card = {
+      number: number,
+      id: this.state.idCounter
+    };
+
+    this.setState({
+      cards: [...this.state.cards, card].sort((a, b) => a.number - b.number),
+      idCounter: this.state.idCounter + 1,
+      money: this.state.money - ((11-number)/55*500)
     }, () => {
       if (this.checkForWin()) {
         this.win();
@@ -59,7 +80,7 @@ class App extends Component {
       cards: this.state.cards.filter(card => {
         return card.id !== id;
       }),
-      money: this.state.money + card.number //This should of course be changed
+      money: this.state.money + ((11-card.number)/55*500)
     });
   }
 
@@ -83,13 +104,14 @@ class App extends Component {
 
       if (index !== -1) {
         cards.splice(index, 1);
+        numbers.splice(index, 1);
       }
     }
 
     this.setState({
       cards: cards,
       won: true,
-      money: this.state.money += 100
+      money: this.state.money += 500
     });
   }
 
@@ -124,6 +146,14 @@ class App extends Component {
     return winningCards;
   }
 
+  renderBuyCards() {
+    const output = [];
+    for (let i=1; i<=10; i++) {
+      output.push(<button onClick={() => this.buyCard(i)} style={{display: 'inline'}}>{i}</button>)
+    }
+    return output;
+  }
+
   renderResultText() {
     const latestCard = this.state.cards.find(card => {
       return card.id === this.state.idCounter - 1;
@@ -150,6 +180,9 @@ class App extends Component {
         <p>Number of cards: {this.state.cards.length}</p>
         <button onClick={() => this.deal(10) }>DEAL 10 CARDS</button>
         <button onClick={() => this.deal(1)}>DEAL 1 CARD</button>
+        <h3>Buy specific card</h3>
+        {this.renderBuyCards()}
+        <br />
         {this.renderResultText()}
         {this.renderWinningCards()}
         {this.renderCards()}
